@@ -61,7 +61,7 @@ makes the instance a *planar SSUF (PSSUF) instance* in the sense of TVZ Definiti
 
 **Planarity is standard for this 7-vertex graph, and it is NOT formalized here.** It is a
 hand argument, stated in this README only; nothing in `Dinitz.lean` depends on it. That is
-the honest boundary of the kernel-checked claim.
+the boundary of the kernel-checked claim.
 
 **No conflict with the planar theorems of TVZ.** Theorem 1.7 (no costs, two-sided violation
 `d_max`) and Theorem 1.8 (with costs, two-sided violation `2·d_max`) both remain satisfied

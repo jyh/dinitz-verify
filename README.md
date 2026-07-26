@@ -329,6 +329,7 @@ reported theorems, and the statement-identity bridge.
 
 The mathematics is due to Dmitry Rybin and the GPT-5.6 Pro session he ran (2026-07-22); the
 conjecture's statement is quoted from Traub–Vargas Koch–Zenklusen, arXiv:2308.02651. This
-verification: Jason Hickey (with Claude). Built on
+verification: Jason Hickey (with Claude). The author thanks Katherine Schlitz for
+bringing the announcement to his attention. Built on
 [mathlib](https://github.com/leanprover-community/mathlib4), the Lean mathematical library,
 by the mathlib community. License: Apache-2.0 (see `LICENSE`).

@@ -1,8 +1,9 @@
 # dinitz-verify — a kernel-checked refutation of the Goemans (Dinitz–Garg–Goemans) cost conjecture
 
-`Dinitz.lean` machine-checks, in **Lean 4 + mathlib**, the July-2026 counterexample to
-**Goemans' cost conjecture** for single-source unsplittable flow (Conjecture 1.3 of
-arXiv:2308.02651, the cost version of the Dinitz–Garg–Goemans theorem).
+`Challenge.lean` and `Submission.lean` machine-check, in **Lean 4 + mathlib**, the
+July-2026 counterexample to **Goemans' cost conjecture** for single-source unsplittable
+flow (Conjecture 1.3 of arXiv:2308.02651, the cost version of the Dinitz–Garg–Goemans
+theorem).
 
 The headline theorem:
 
@@ -31,13 +32,39 @@ a corollary and as the searchable name.
 This is the second entry of the "kernel referee" program, after
 [`jacobian-verify`](https://github.com/jyh/jacobian-verify).
 
+## Repository layout
+
+The layout follows the comparator convention (as in
+[`leanprover/lean-eval`](https://github.com/leanprover/lean-eval)): the statement is kept in
+a separate, trusted file, so that what is being claimed can be reviewed without reading a
+line of proof — and the fact that the proof discharges exactly that claim is then checked
+mechanically rather than taken on trust.
+
+| file | what it is |
+|---|---|
+| [`Challenge.lean`](Challenge.lean) | **the statement.** Imports only Mathlib; declares `IsWalk`, `uload` and `DGGCostConjectureFull`, and states `goemans_cost_conjecture_false` with a `sorry` body. Nothing is proved here — this is the file to review against the quotes from the primary source (given below, and in the header of `Submission.lean`). 111 lines, most of them comment. |
+| [`Submission.lean`](Submission.lean) | **the proof.** `import Challenge`, then everything else, in namespace `Submission`, ending in `Submission.goemans_cost_conjecture_false`. No `sorry`. |
+| [`check.py`](check.py) | `lake build`, the axiom audit, and the bridge below — plus an independent Python brute force of the instance (see "Independent cross-check"). |
+
+Because `Submission.lean` imports `Challenge.lean`, the two refer to the *same*
+`DGGCostConjectureFull` constant: the statement cannot drift between them. That the proof
+discharges the stated Prop is itself type-checked, by the bridge
+
+```lean
+example : (¬ DGGCostConjectureFull ℚ) := Submission.goemans_cost_conjecture_false
+```
+
+which `check.py` elaborates. `check.py` also verifies that every theorem of
+`Submission.lean` depends on no axiom outside `[propext, Classical.choice, Quot.sound]` —
+in particular that none of them reaches through the `sorry` in `Challenge.lean`.
+
 ## Where the conjecture is stated — and where it is not
 
 Read this before citing anything here.
 
 The conjecture refuted is **not** in the 1999 Combinatorica paper of Dinitz, Garg and
 Goemans. That paper is the *theorem* — an unsplittable flow with additive capacity violation
-`d_max`, quoted as Theorem 1.2 in the header of `Dinitz.lean`. The cost strengthening is
+`d_max`, quoted as Theorem 1.2 in the header of `Submission.lean`. The cost strengthening is
 folklore:
 the primary source used here — Traub, Vargas Koch, Zenklusen, *Single-Source Unsplittable
 Flows in Planar Graphs*, arXiv:2308.02651 — introduces it with the words
@@ -47,8 +74,8 @@ Flows in Planar Graphs*, arXiv:2308.02651 — introduces it with the words
 
 **with no citation**, and then states it as their Conjecture 1.3. What is refuted here is
 therefore *TVZ's rendering* of that folklore conjecture, quoted verbatim in the header of
-`Dinitz.lean`. No claim is made about any other wording of it, and the DGG99 text itself was
-not consulted.
+`Submission.lean`. No claim is made about any other wording of it, and the DGG99 text itself
+was not consulted.
 
 ## Planarity: the instance is planar, and what that does and does not mean
 
@@ -60,8 +87,8 @@ is K₄; a subdivision of a planar graph is planar. Together with acyclicity (`r
 makes the instance a *planar SSUF (PSSUF) instance* in the sense of TVZ Definition 1.6.
 
 **Planarity is standard for this 7-vertex graph, and it is NOT formalized here.** It is a
-hand argument, stated in this README only; nothing in `Dinitz.lean` depends on it. That is
-the boundary of the kernel-checked claim.
+hand argument, stated in this README only; nothing in `Challenge.lean` or `Submission.lean`
+depends on it. That is the boundary of the kernel-checked claim.
 
 **No conflict with the planar theorems of TVZ.** Theorem 1.7 (no costs, two-sided violation
 `d_max`) and Theorem 1.8 (with costs, two-sided violation `2·d_max`) both remain satisfied
@@ -107,7 +134,7 @@ Underlying literature:
 - V. Traub, L. Vargas Koch, R. Zenklusen, *Single-Source Unsplittable Flows in Planar
   Graphs*, arXiv:2308.02651. **Used here as the primary source for the exact statement**
   (Definition 1.1, Theorem 1.2, Conjecture 1.3, and Theorems 1.7/1.8); the relevant prose is
-  quoted verbatim in the header of `Dinitz.lean`.
+  quoted verbatim in the header of `Submission.lean`.
 
 **We claim no part of the discovery.** This repository contributes only the independent,
 kernel-checked verification.
@@ -171,7 +198,7 @@ theorem dgg_cost_conjecture_false : ¬ DGGCostConjecture ℚ
 
 Every way in which the formal `DGGCostConjectureFull` deviates from Conjecture 1.3 makes it
 **weaker or equivalent**, so refuting it refutes Conjecture 1.3 a fortiori. The full
-clause-by-clause comparison is in the header of `Dinitz.lean`; in summary:
+clause-by-clause comparison is in the header of `Submission.lean`; in summary:
 
 - we assert only **existence** of a good unsplittable flow, not polynomial-time
   computability (the conjecture claims the stronger, computational form);
@@ -227,24 +254,27 @@ stated for the Full form, which closes all three; the instance discharges them
 
 ## Axiom report
 
-Every theorem in the file reports at most `[propext, Classical.choice, Quot.sound]` — the
-three standard mathlib axioms. There is **no `sorry`**, **no `native_decide`**, and **no new
-axiom**. Several theorems come in below even that:
+Every theorem in `Submission.lean` reports at most `[propext, Classical.choice, Quot.sound]`
+— the three standard mathlib axioms. There is **no `sorry`** in the proof, **no
+`native_decide`**, and **no new axiom**. (The single `sorry` in the repository is the
+placeholder body of the theorem stated in `Challenge.lean`; `check.py` verifies that no
+theorem of `Submission.lean` reaches it — `sorryAx` appears in no axiom report.) Several
+theorems come in below even the three:
 `DGGCostConjectureFull_of_DGGCostConjecture` and `Dmax_is_max` use `[propext, Quot.sound]`,
 `the_six_are_walks` uses only `propext`, and `the_six_walks_are_simple` uses none at all.
 
-The file ends with a `#print axioms` block covering **the 35 headline results**, emitted by
-the compile itself. To be precise about the scope: the file declares 89 named constants (53
-theorems, 33 definitions, 2 inductive types, 1 `Decidable` instance); the block covers 35 of
-the 53 theorems — every result named anywhere in this README — and the 18 it omits are
-helper lemmas that the covered ones depend on, so their axiom footprint is subsumed
-(`#print axioms` reports transitive dependencies).
+`Submission.lean` ends with a `#print axioms` block covering **the 35 headline results**,
+emitted by the compile itself. To be precise about the scope: the two files declare 89 named
+constants besides `Challenge.lean`'s placeholder (53 theorems, 33 definitions, 2 inductive
+types, 1 `Decidable` instance); the block covers 35 of the 53 theorems — every result named
+anywhere in this README — and the 18 it omits are helper lemmas that the covered ones depend
+on, so their axiom footprint is subsumed (`#print axioms` reports transitive dependencies).
 
 ## How to reproduce
 
-`Dinitz.lean` is a single self-contained file (`import Mathlib`); "self-contained" means it
-declares everything it uses on top of mathlib, not that it runs without mathlib. Two ways to
-check it:
+The two files are self-contained on top of mathlib — `Challenge.lean` imports only Mathlib,
+`Submission.lean` imports only `Challenge`; "self-contained" means they declare everything
+they use on top of mathlib, not that they run without mathlib. Two ways to check them:
 
 **1. With the included lakefile** (fetches mathlib; needs
 [elan](https://github.com/leanprover/elan)), in this directory:
@@ -252,6 +282,7 @@ check it:
 ```sh
 lake exe cache get   # fetch the mathlib build cache
 lake build           # kernel-checks everything
+python3 check.py     # build + axiom audit + the statement-identity bridge
 ```
 
 **2. Against any project already pinning the same mathlib revision** — the fast path, and
@@ -259,11 +290,14 @@ the one used during development (here, the `salt` project):
 
 ```sh
 cd /path/to/salt
-~/.elan/bin/lake env lean /path/to/dinitz/Dinitz.lean
+D=/path/to/dinitz-verify; mkdir -p /tmp/dinitz
+~/.elan/bin/lake env lean --root="$D" -o /tmp/dinitz/Challenge.olean "$D/Challenge.lean"
+~/.elan/bin/lake env bash -c "LEAN_PATH=/tmp/dinitz:\$LEAN_PATH lean --root=$D $D/Submission.lean"
 ```
 
-Either way the expected output is the 35 `#print axioms` lines and nothing else — zero
-errors, zero warnings. Route 2 takes a few seconds wall-clock (4–16 s here, depending on how
+Either way the expected output is the 35 `#print axioms` lines, plus one `declaration uses
+'sorry'` warning on the placeholder in `Challenge.lean` and nothing else — zero errors, no
+other warning. Route 2 takes a few seconds wall-clock (4–16 s here, depending on how
 warm the OS file cache is, with mathlib already built); the verification itself is
 kernel-cheap because all arithmetic is over `ℤ` and every `decide` ranges over a handful of
 cases.
@@ -273,9 +307,10 @@ Pinned: `leanprover/lean4:v4.32.0-rc1`; mathlib
 
 ## Independent cross-check
 
-`check.py` is a small, dependency-free Python brute force of the same claims (conservation,
-`d_max`, fractional cost, exhaustive walk enumeration to length 8, all 8 routings). It
-agrees with the Lean development:
+`check.py` opens with a small, dependency-free Python brute force of the same claims
+(conservation, `d_max`, fractional cost, exhaustive walk enumeration to length 8, all 8
+routings) — run it on its own with `python3 check.py --brute`. It agrees with the Lean
+development:
 
 ```
 conservation OK; dmax = 15
@@ -286,7 +321,9 @@ t3 [('su', 'ut3'), ('su', 'uv', 'vw', 'wt3')]
 capacity-good routings: 4   min unsplittable cost: 60
 ```
 
-It is a sanity oracle only; the Lean file is the referee.
+It is a sanity oracle only; the Lean files are the referee. The rest of `check.py` runs the
+Lean gates listed under "Repository layout": `lake build`, the axiom audit of all 35
+reported theorems, and the statement-identity bridge.
 
 ## Credits and license
 

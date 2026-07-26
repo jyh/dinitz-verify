@@ -1,6 +1,14 @@
 /-
 # A kernel-checked refutation of the Goemans (Dinitz–Garg–Goemans) cost conjecture
   for single-source unsplittable flow.
+## Where the statement lives
+
+This file carries the *proof*.  The Prop it refutes — `DGGCostConjectureFull` — together
+with the two definitions it is phrased with (`IsWalk` and `uload`), lives in
+`Challenge.lean`, which imports nothing but Mathlib and proves nothing; that is the file to
+read against the quotes below.  The two files share a single `DGGCostConjectureFull`
+constant, so what is proved here is literally what is stated there, and `check.py`
+type-checks that bridge.  See the README's "Repository layout".
 
 ## Provenance
 
@@ -148,23 +156,19 @@ rank), and `u := x` with `le_refl`.
 
 No `sorry`, no `native_decide`, no new axioms; see the `#print axioms` block at the end.
 -/
-import Mathlib
+import Challenge
 
 set_option maxHeartbeats 2000000
 
-namespace DGG
+namespace Submission
+
+open DGG
 
 /-! ## 0.  Walks in a digraph (generic) -/
 
 section Walks
 
 variable {W E : Type}
-
-/-- `IsWalk tail head x l y`: the list of arcs `l`, read left to right, is a walk from
-vertex `x` to vertex `y`.  Repeated vertices and arcs are permitted. -/
-def IsWalk (tail head : E → W) : W → List E → W → Prop
-  | x, [], y => x = y
-  | x, e :: l, y => tail e = x ∧ IsWalk tail head (head e) l y
 
 @[simp] theorem IsWalk_nil (tail head : E → W) (x y : W) :
     IsWalk tail head x [] y ↔ x = y := Iff.rfl
@@ -264,12 +268,6 @@ theorem conservation_source :
       - (∑ a : Arc, if hd a = Vtx.s then xf a else 0) = ∑ i : Fin 3, dem i := by decide
 
 /-! ## 2.  Loads and costs -/
-
-/-- Load induced on arc `a` by an unsplittable routing `P` with demands `d`:
-`flow_P(a) = sum_{k : a in P k} d k`. -/
-def uload {R K E : Type} [AddCommMonoid R] [Fintype K] [DecidableEq E]
-    (d : K → R) (P : K → List E) (a : E) : R :=
-  ∑ k : K, if a ∈ P k then d k else 0
 
 /-- A routing: one walk from `s` to `t_i` per commodity `i`. -/
 def IsRouting (p : Fin 3 → List Arc) : Prop :=
@@ -571,49 +569,6 @@ def DGGCostConjecture (R : Type) [CommRing R] [LinearOrder R] [IsStrictOrderedRi
       (∀ a, uload d P a ≤ x a + dmax) ∧
       (∑ a : E, c a * uload d P a) ≤ ∑ a : E, c a * x a
 
-/-- **Goemans' cost conjecture, literature-faithful form.**  Conjecture 1.3 of
-arXiv:2308.02651 with nothing elided: the capacity vector `u` is present together with the
-source's standing hypothesis `x ≤ u`, and the digraph `G = (W, E)` is required to be
-*simple* (no two arcs share both endpoints), *loopless*, and *acyclic* (witnessed by a
-topological rank `r`), the source itself noting that `G` may be assumed acyclic.
-
-Each of these four is an **added** hypothesis relative to `DGGCostConjecture`, so this Prop
-is weaker -- see `DGGCostConjectureFull_of_DGGCostConjecture`, which proves that
-implication in the kernel -- and `not_DGGCostConjectureFull` is correspondingly the
-stronger refutation.  It is also weaker than any reading of Conjecture 1.3: no reading of
-"directed graph" or of the SSUF instance data is excluded. -/
-def DGGCostConjectureFull (R : Type) [CommRing R] [LinearOrder R] [IsStrictOrderedRing R] :
-    Prop :=
-  ∀ (W E K : Type) [Fintype W] [DecidableEq W] [Fintype E] [DecidableEq E] [Fintype K]
-    (tail head : E → W) (src : W) (term : K → W) (d : K → R) (dmax : R) (x c u : E → R),
-    -- the digraph is simple, loopless and acyclic
-    Function.Injective (fun a : E => (tail a, head a)) →
-    (∀ a, tail a ≠ head a) →
-    (∃ r : W → ℕ, ∀ a, r (tail a) < r (head a)) →
-    -- capacities, with the source's standing hypothesis
-    (∀ a, x a ≤ u a) →
-    -- the terminals are distinct from each other and from the source
-    Function.Injective term →
-    (∀ k, term k ≠ src) →
-    -- demands are positive and `dmax` is the maximum demand
-    (∀ k, 0 < d k) →
-    (∀ k, d k ≤ dmax) →
-    (∃ k, d k = dmax) →
-    -- nonnegative costs and a nonnegative flow
-    (∀ a, 0 ≤ c a) →
-    (∀ a, 0 ≤ x a) →
-    -- `x` is a feasible single-source flow for the demands
-    (∀ z : W, z ≠ src →
-      (∑ a : E, if head a = z then x a else 0) - (∑ a : E, if tail a = z then x a else 0)
-        = ∑ k : K, if term k = z then d k else 0) →
-    ((∑ a : E, if tail a = src then x a else 0)
-        - (∑ a : E, if head a = src then x a else 0) = ∑ k : K, d k) →
-    -- conclusion
-    ∃ P : K → List E,
-      (∀ k, IsWalk tail head src (P k) (term k)) ∧
-      (∀ a, uload d P a ≤ x a + dmax) ∧
-      (∑ a : E, c a * uload d P a) ≤ ∑ a : E, c a * x a
-
 /-- **The Full form is the weaker Prop.**  It is `DGGCostConjecture` with four hypotheses
 added (simple, loopless, acyclic, `x ≤ u`), so the bare conjecture implies it.  Hence
 `¬ DGGCostConjectureFull` is strictly the stronger statement, and it implies
@@ -818,4 +773,4 @@ theorem dgg_cost_conjecture_false_of_headline : ¬ DGGCostConjecture ℚ :=
 #print axioms dgg_cost_conjecture_false
 #print axioms dgg_cost_conjecture_false_real
 
-end DGG
+end Submission

@@ -139,6 +139,41 @@ Underlying literature:
 **We claim no part of the discovery.** This repository contributes only the independent,
 kernel-checked verification.
 
+### The attribution chain
+
+Traub–Vargas Koch–Zenklusen introduce the conjecture without citation. The chain does end
+somewhere: Salazar–Skutella (*Single-source k-splittable min-cost flows*) cite it as
+"Goemans [4]", where [4] is *"M. X. Goemans, January 2000, Personal communication."* No
+document — a date and a form of transmission. Every difference among the published
+restatements is downstream of that. (This provenance was traced by
+[DiscreteAlias](https://github.com/DiscreteAlias); see below.)
+
+## Related formalization, and the other wordings
+
+**[DiscreteAlias/unsplittable-flow](https://github.com/DiscreteAlias/unsplittable-flow)**
+is an independent Lean 4 formalization of the same counterexample, written without
+knowledge of this one (announced five days after this repository, in the same
+[Zulip thread](https://leanprover.zulipchat.com/#narrow/channel/583339-AI-authored-projects/topic/Counterexample.20to.20Dinitz-Garg-Goemans.20conjecture)).
+The two developments differ in useful ways, and each covers ground the other does not:
+
+- **The statement catalogue (theirs).** This repository is explicit that it refutes the
+  TVZ rendering (Conjecture 1.3) and claims nothing about other wordings.
+  DiscreteAlias surveyed the literature and found **five sources with six statements, not
+  equivalent as written** — cost domains differ (unrestricted ℝ, ℚ≥₀, ℝ≥₀, unspecified)
+  and modalities differ (two assert polynomial-time computability, four assert existence;
+  refuting a poly-time claim is weaker than refuting an existence claim). Their repository
+  refutes all six, including both convex-combination forms, which this one does not cover.
+- **Statement generality (here).** `min_cost_capacity_good` quantifies over arbitrary
+  walk-triples (no vertex-simplicity assumption is needed — though on this acyclic
+  instance the two readings coincide, by the rank function `[0,1,2,3,4,4,4]`); the theorem
+  is generic over ordered rings; and `check.py` bridges `Challenge` against `Submission`,
+  which catches statement drift.
+- **A caveat both repositories share:** both formalizations were written with Claude, so
+  their agreement is *correlated, not independent*. The kernel de-correlates the proof
+  layer — both proofs are machine-checked from the same three axioms — but the
+  statement-choice layer is where independent judgment matters, and the six-wordings
+  catalogue is exactly that de-correlation.
+
 ## The instance
 
 DAG on 7 vertices `{s, u, v, w, t1, t2, t3}`, source `s`, terminals `t1, t2, t3` with

@@ -159,7 +159,8 @@ The two developments differ in useful ways, and each covers ground the other doe
 - **The statement catalogue (theirs).** This repository is explicit that it refutes the
   TVZ rendering (Conjecture 1.3) and claims nothing about other wordings.
   DiscreteAlias surveyed the literature and found **five sources with six statements, not
-  equivalent as written** — cost domains differ (unrestricted ℝ, ℚ≥₀, ℝ≥₀, unspecified)
+  equivalent as written** (the catalogue lives in their `Statement.lean` §9, with source
+  and page for each) — cost domains differ (unrestricted ℝ, ℚ≥₀, ℝ≥₀, unspecified)
   and modalities differ (two assert polynomial-time computability, four assert existence;
   refuting a poly-time claim is weaker than refuting an existence claim). Their repository
   refutes all six, including both convex-combination forms, which this one does not cover.
